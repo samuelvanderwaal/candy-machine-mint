@@ -1,10 +1,6 @@
 import * as anchor from "@project-serum/anchor";
 
-import {
-  MintLayout,
-  TOKEN_PROGRAM_ID,
-  Token,
-} from "@solana/spl-token";
+import { MintLayout, TOKEN_PROGRAM_ID, Token } from "@solana/spl-token";
 
 export const CANDY_MACHINE_PROGRAM = new anchor.web3.PublicKey(
   "cndyAnrLdpjq1Ssp1z8xxDsB8dxe7u4HL5Nxi2K5WXZ"
@@ -19,7 +15,7 @@ const TOKEN_METADATA_PROGRAM_ID = new anchor.web3.PublicKey(
 );
 
 export interface CandyMachine {
-  id: anchor.web3.PublicKey,
+  id: anchor.web3.PublicKey;
   connection: anchor.web3.Connection;
   program: anchor.Program;
 }
@@ -29,7 +25,7 @@ interface CandyMachineState {
   itemsAvailable: number;
   itemsRedeemed: number;
   itemsRemaining: number;
-  goLiveDate: Date,
+  goLiveDate: Date;
 }
 
 export const awaitTransactionSignatureConfirmation = async (
@@ -43,7 +39,7 @@ export const awaitTransactionSignatureConfirmation = async (
   let status: anchor.web3.SignatureStatus | null | void = {
     slot: 0,
     confirmations: 0,
-    err: null,
+    err: null
   };
   let subId = 0;
   status = await new Promise(async (resolve, reject) => {
@@ -63,7 +59,7 @@ export const awaitTransactionSignatureConfirmation = async (
           status = {
             err: result.err,
             slot: context.slot,
-            confirmations: 0,
+            confirmations: 0
           };
           if (result.err) {
             console.log("Rejected via websocket", result.err);
@@ -84,7 +80,7 @@ export const awaitTransactionSignatureConfirmation = async (
       (async () => {
         try {
           const signatureStatuses = await connection.getSignatureStatuses([
-            txid,
+            txid
           ]);
           status = signatureStatuses && signatureStatuses.value[0];
           if (!done) {
@@ -119,7 +115,7 @@ export const awaitTransactionSignatureConfirmation = async (
   done = true;
   console.log("Returning status", status);
   return status;
-}
+};
 
 /* export */ const createAssociatedTokenAccountInstruction = (
   associatedTokenAddress: anchor.web3.PublicKey,
@@ -135,47 +131,46 @@ export const awaitTransactionSignatureConfirmation = async (
     {
       pubkey: anchor.web3.SystemProgram.programId,
       isSigner: false,
-      isWritable: false,
+      isWritable: false
     },
     { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
     {
       pubkey: anchor.web3.SYSVAR_RENT_PUBKEY,
       isSigner: false,
-      isWritable: false,
-    },
+      isWritable: false
+    }
   ];
   return new anchor.web3.TransactionInstruction({
     keys,
     programId: SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
-    data: Buffer.from([]),
+    data: Buffer.from([])
   });
-}
+};
 
 export const getCandyMachineState = async (
   anchorWallet: anchor.Wallet,
   candyMachineId: anchor.web3.PublicKey,
-  connection: anchor.web3.Connection,
+  connection: anchor.web3.Connection
 ): Promise<CandyMachineState> => {
   const provider = new anchor.Provider(connection, anchorWallet, {
-    preflightCommitment: "recent",
+    preflightCommitment: "recent"
   });
 
-  const idl = await anchor.Program.fetchIdl(
-    CANDY_MACHINE_PROGRAM,
-    provider
-  );
+  const idl = await anchor.Program.fetchIdl(CANDY_MACHINE_PROGRAM, provider);
 
   const program = new anchor.Program(idl, CANDY_MACHINE_PROGRAM, provider);
   const candyMachine = {
     id: candyMachineId,
     connection,
-    program,
-  }
+    program
+  };
 
   const state: any = await program.account.candyMachine.fetch(candyMachineId);
   const itemsAvailable = state.data.itemsAvailable.toNumber();
   const itemsRedeemed = state.itemsRedeemed.toNumber();
   const itemsRemaining = itemsAvailable - itemsRedeemed;
+
+  console.log(state.data);
 
   let goLiveDate = state.data.goLiveDate.toNumber();
   goLiveDate = new Date(goLiveDate * 1000);
@@ -185,9 +180,9 @@ export const getCandyMachineState = async (
     itemsAvailable,
     itemsRedeemed,
     itemsRemaining,
-    goLiveDate,
+    goLiveDate
   };
-}
+};
 
 const getMasterEdition = async (
   mint: anchor.web3.PublicKey
@@ -198,7 +193,7 @@ const getMasterEdition = async (
         Buffer.from("metadata"),
         TOKEN_METADATA_PROGRAM_ID.toBuffer(),
         mint.toBuffer(),
-        Buffer.from("edition"),
+        Buffer.from("edition")
       ],
       TOKEN_METADATA_PROGRAM_ID
     )
@@ -213,7 +208,7 @@ const getMetadata = async (
       [
         Buffer.from("metadata"),
         TOKEN_METADATA_PROGRAM_ID.toBuffer(),
-        mint.toBuffer(),
+        mint.toBuffer()
       ],
       TOKEN_METADATA_PROGRAM_ID
     )
@@ -236,7 +231,7 @@ export const mintOneToken = async (
   candyMachine: CandyMachine,
   config: anchor.web3.PublicKey, // feels like this should be part of candyMachine?
   payer: anchor.web3.PublicKey,
-  treasury: anchor.web3.PublicKey,
+  treasury: anchor.web3.PublicKey
 ): Promise<string> => {
   const mint = anchor.web3.Keypair.generate();
   const token = await getTokenWallet(payer, mint.publicKey);
@@ -263,7 +258,7 @@ export const mintOneToken = async (
       tokenProgram: TOKEN_PROGRAM_ID,
       systemProgram: anchor.web3.SystemProgram.programId,
       rent: anchor.web3.SYSVAR_RENT_PUBKEY,
-      clock: anchor.web3.SYSVAR_CLOCK_PUBKEY,
+      clock: anchor.web3.SYSVAR_CLOCK_PUBKEY
     },
     signers: [mint],
     instructions: [
@@ -272,7 +267,7 @@ export const mintOneToken = async (
         newAccountPubkey: mint.publicKey,
         space: MintLayout.span,
         lamports: rent,
-        programId: TOKEN_PROGRAM_ID,
+        programId: TOKEN_PROGRAM_ID
       }),
       Token.createInitMintInstruction(
         TOKEN_PROGRAM_ID,
@@ -294,10 +289,10 @@ export const mintOneToken = async (
         payer,
         [],
         1
-      ),
-    ],
+      )
+    ]
   });
-}
+};
 
 export const shortenAddress = (address: string, chars = 4): string => {
   return `${address.slice(0, chars)}...${address.slice(-chars)}`;
@@ -305,4 +300,4 @@ export const shortenAddress = (address: string, chars = 4): string => {
 
 const sleep = (ms: number): Promise<void> => {
   return new Promise((resolve) => setTimeout(resolve, ms));
-}
+};

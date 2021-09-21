@@ -49,6 +49,7 @@ const App = () => {
   );
 
   return (
+    <div className="App">
     <ConnectionProvider endpoint={endpoint}>
       <WalletProvider wallets={wallets} autoConnect>
         <WalletDialogProvider>
@@ -63,6 +64,7 @@ const App = () => {
         </WalletDialogProvider>
       </WalletProvider>
     </ConnectionProvider>
+    </div>
   );
 };
 
